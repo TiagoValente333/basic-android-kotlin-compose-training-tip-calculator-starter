@@ -29,8 +29,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    TipTimeLayout()
+                    FuelCostLayout()
                 }
             }
         }
@@ -66,11 +66,16 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TipTimeLayout() {
-    var amountInput by remember { mutableStateOf("") }
+fun FuelCostLayout() {
+    var fuelPriceInput by remember { mutableStateOf("") }
+    var fuelConsumptionInput by remember { mutableStateOf("") }
+    var distanceInput by remember { mutableStateOf("") }
 
-    val amount = amountInput.toDoubleOrNull() ?: 0.0
-    val tip = calculateTip(amount)
+    val fuelPrice = fuelPriceInput.toDoubleOrNull() ?: 0.0
+    val fuelConsumption = fuelConsumptionInput.toDoubleOrNull() ?: 0.0
+    val distance = distanceInput.toDoubleOrNull() ?: 0.0
+
+    val totalCost = calculateFuelCost(fuelPrice, fuelConsumption, distance)
 
     Column(
         modifier = Modifier
@@ -82,18 +87,39 @@ fun TipTimeLayout() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.calculate_tip),
+            text = "Calculadora de Custo de Combustível",
+            style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier
                 .padding(bottom = 16.dp, top = 40.dp)
                 .align(alignment = Alignment.Start)
         )
+
+        // Preço do combustível
         EditNumberField(
-            value = amountInput,
-            onValueChanged = { amountInput = it },
+            value = fuelPriceInput,
+            onValueChanged = { fuelPriceInput = it },
+            label = "Preço do combustível (por litro)",
+            modifier = Modifier.padding(bottom = 16.dp).fillMaxWidth()
+        )
+
+        // Consumo do veículo
+        EditNumberField(
+            value = fuelConsumptionInput,
+            onValueChanged = { fuelConsumptionInput = it },
+            label = "Consumo do veículo (l/100km)",
+            modifier = Modifier.padding(bottom = 16.dp).fillMaxWidth()
+        )
+
+        // Distância a percorrer
+        EditNumberField(
+            value = distanceInput,
+            onValueChanged = { distanceInput = it },
+            label = "Distância a percorrer (km)",
             modifier = Modifier.padding(bottom = 32.dp).fillMaxWidth()
         )
+
         Text(
-            text = stringResource(R.string.tip_amount, tip),
+            text = "Custo total: $totalCost",
             style = MaterialTheme.typography.displaySmall
         )
         Spacer(modifier = Modifier.height(150.dp))
@@ -104,6 +130,7 @@ fun TipTimeLayout() {
 fun EditNumberField(
     value: String,
     onValueChanged: (String) -> Unit,
+    label: String,
     modifier: Modifier
 ) {
     TextField(
@@ -111,25 +138,30 @@ fun EditNumberField(
         singleLine = true,
         modifier = modifier,
         onValueChange = onValueChanged,
-        label = { Text(stringResource(R.string.bill_amount)) },
+        label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
     )
 }
 
 /**
- * Calculates the tip based on the user input and format the tip amount
- * according to the local currency.
- * Example would be "$10.00".
+ * Calculates the total fuel cost based on:
+ * @param fuelPrice price per liter of fuel
+ * @param fuelConsumption vehicle consumption in liters per 100km
+ * @param distance distance to travel in kilometers
  */
-private fun calculateTip(amount: Double, tipPercent: Double = 15.0): String {
-    val tip = tipPercent / 100 * amount
-    return NumberFormat.getCurrencyInstance().format(tip)
+private fun calculateFuelCost(fuelPrice: Double, fuelConsumption: Double, distance: Double): String {
+    if (fuelConsumption == 0.0 || distance == 0.0) {
+        return NumberFormat.getCurrencyInstance().format(0.0)
+    }
+    val litersNeeded = (fuelConsumption / 100) * distance
+    val totalCost = litersNeeded * fuelPrice
+    return NumberFormat.getCurrencyInstance().format(totalCost)
 }
 
 @Preview(showBackground = true)
 @Composable
-fun TipTimeLayoutPreview() {
+fun FuelCostLayoutPreview() {
     TipTimeTheme {
-        TipTimeLayout()
+        FuelCostLayout()
     }
 }
